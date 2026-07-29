@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>lil 가이드북</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f6f9; padding: 20px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        #screen-lock { position: fixed; top:0; left:0; width:100%; height:100%; background:#f4f6f9; z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .lock-box { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; max-width: 320px; width: 85%; }
+        .lock-input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; text-align: center; letter-spacing: 3px; }
+        .btn-unlock { width: 100%; padding: 12px; background: #111; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 15px; }
+        .box { background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 400px; width: 100%; padding: 20px; box-sizing: border-box; }
+        h1, h2 { text-align: center; margin-top: 0; }
+        .btn-select { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; background: #fff; border-radius: 8px; cursor: pointer; text-align: left; }
+        .btn-select:hover { border-color: #4a90e2; }
+        .img-area { text-align: center; margin: 15px 0; cursor: pointer; background: #fafafa; padding: 10px; border: 1px solid #eee; }
+        .img-area img { max-width: 100%; max-height: 140px; object-fit: contain; }
+        .nav { display: flex; justify-content: space-between; margin-top: 20px; width: 100%; max-width: 400px; }
+        .btn-nav { padding: 10px 25px; background: #111; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-nav:disabled { background: #ccc; cursor: not-allowed; }
+        .stick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+        .stick { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; text-align: center; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; }
+        .modal-body { background: #fff; padding: 20px; border-radius: 8px; max-width: 300px; width: 80%; text-align: center; }
+        .modal-close { margin-top: 15px; padding: 5px 15px; background: #111; color: #fff; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="screen-lock">
+        <div class="lock-box">
+            <h3 style="margin-top:0; color:#111;">🔒 보안 인증</h3>
+            <p style="font-size:14px; color:#666; margin:0;">가이드북 접속을 위해<br>비밀번호를 입력해 주세요.</p>
+            <input type="password" id="pw-input" class="lock-input" placeholder="비밀번호 입력" onkeypress="if(event.key==='Enter')checkPw()">
+            <button class="btn-unlock" onclick="checkPw()">인증하기</button>
+        </div>
+    </div>
+
+    <h3 id="main-title">릴(lil) 가이드북</h3>
+    
+    <div class="box">
+        <div id="screen-sel">
+            <h2>기기를 선택하세요</h2>
+            <button class="btn-select" onclick="start('hybrid')"><strong>⚡ 릴 하이브리드</strong><br><small>카트리지와 스틱을 함께 사용</small></button>
+            <button class="btn-select" onclick="start('able')"><strong>✨ 릴 에이블</strong><br><small>3가지 스틱을 자동 감지하는 스마트 기기</small></button>
+        </div>
+
+        <div id="screen-guide" style="display:none;">
+            <div id="page-num" style="color:#888; font-size:12px; font-weight:bold;"></div>
+            <h2 id="page-title" style="text-align:left; border-bottom:2px solid #eee; padding-bottom:5px;"></h2>
+            <div class="img-area" onclick="zoomImg()">
+                <img id="view-img" src="" alt="제품">
+                <div style="font-size:11px; color:#999; margin-top:5px;">🔍 이미지 클릭 시 확대</div>
+            </div>
+            <ul id="view-list" style="padding-left:20px; font-size:14px; line-height:1.6;"></ul>
+            <div id="view-stick" class="stick-grid"></div>
+            <button onclick="home()" style="width:100%; margin-top:15px; padding:8px; background:none; border:1px solid #ccc; cursor:pointer;">🏠 메인으로</button>
+        </div>
+    </div>
+
+    <div class="nav" id="nav-bar" style="display:none;">
+        <button class="btn-nav" id="btn-prev" onclick="move(-1)">이전</button>
+        <button class="btn-nav" id="btn-next" onclick="move(1)">다음</button>
+    </div>
+
+    <div id="pop" class="modal" onclick="closePop()">
+        <div class="modal-body" onclick="event.stopPropagation()">
+            <h3 id="pop-title"></h3>
+            <p id="pop-desc" style="font-size:14px; color:#555; line-height:1.5;"></p>
+            <button class="modal-close" onclick="closePop()">확인</button>
+        </div>
+    </div>
+    
+    <div id="img-pop" class="modal" onclick="this.style.display='none'">
+        <img id="pop-img" src="" style="max-width:90%; max-height:80%; background:#fff; padding:5px; border-radius:4px;">
+    </div>
+
+    <script>
+        function checkPw(){
+            if(document.getElementById('pw-input').value==='486'){document.getElementById('screen-lock').style.display='none';}
+            else{alert('비밀번호가 일치하지 않습니다.');document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();}
+        }
+
+        const data = {
+            hybrid: {
+                img: "https://danawa.com",
+                pages: [
+                    { t: "릴 하이브리드 특징", l: ["<strong>하이브리드 메커니즘:</strong> 액상 카트리지와 스틱(MIIX)을 결합해 풍부한 무화량을 구현합니다.", "<strong>스마트 온:</strong> 버튼 없이 스틱을 꽂으면 즉시 자동으로 예열이 시작됩니다."] },
+                    { t: "사용 팁 및 리셋법", l: ["<strong>액상 카트리지:</strong> 상단 캡을 열고 카트리지를 소리 날 때까지 완전히 밀어 결합하세요.", "<strong>먹통 현상 초기화:</strong> 충전기를 꽂은 채로 버튼을 8초 이상 누르면 리셋됩니다."] },
+                    { t: "전용 믹스(MIIX) 스틱 리스트", l: ["아래 스틱을 클릭하면 맛을 상세하게 확인할 수 있습니다."], s: [
+                        { n: "믹스 믹스", d: "기본 담배 맛에서 캡슐을 터트리면 상큼달콤한 과일 향으로 변합니다." },
+                        { n: "믹스 아이스", d: "깔끔하고 시원함이 극대화된 정통 멘솔 제품입니다." },
+                        { n: "믹스 프렌치", d: "은은한 단맛และ 독특한 풍미가 부드럽게 어우러진 맛입니다." },
+                        { n: "믹스 뱅", d: "강력하고 파괴적인 쿨링감을 가진 초강력 멘솔 스틱입니다." }
+                    ]}
+                ]
+            },
+            able: {
+                img: "https://danawa.com",
+                pages: [
+                    { t: "릴 에이블 특징", l: ["<strong>스마트 AI 제어:</strong> 예열, 충전, 소모 타이밍까지 인공지능 기술이 자동 분석합니다.", "<strong>올인원 감지:</strong> 에임(AIIM) 스틱 종류를 자동으로 인식하여 최적 온도를 설정합니다."] },
+                    { t: "디스플레이 및 앱 기능", l: ["<strong>OLED 화면:</strong> 배터리 잔량, 스틱의 남은 모금 수가 화면에 실시간으로 표시됩니다.", "<strong>블루투스 연동:</strong> 전용 스마트폰 앱을 통해 기기 분실 시 위치를 찾을 수 있습니다."] },
+                    { t: "전용 에임(AIIM) 스틱 리스트", l: ["아래 스틱을 클릭하면 맛을 상세하게 확인할 수 있습니다."], s: [
+                        { n: "에임 레귤러", d: "연초 담배 고유의 구수하고 묵직한 담배 본연의 맛을 가졌습니다." },
+                        { n: "에임 아이스", d: "텁텁함 없이 시원하고 청량한 정통 멘솔형 스틱입니다." },
+                        { n: "에임 그래뉼라", d: "특수 과립 기술을 통해 끝까지 일정한 맛과 상쾌함을 유지합니다." },
+                        { n: "에임 베이퍼", d: "액상형 담배에 가까운 풍부한 연무량과 부드러운 목넘김을 제공합니다." }
+                    ]}
+                ]
+            }
+        };
+
+        let mode = ''; let page = 1;
+
+        function start(m) {
+            mode = m; page = 1;
+            document.getElementById('screen-sel').style.display = 'none';
+            document.getElementById('screen-guide').style.display = 'block';
+            document.getElementById('nav-bar').style.display = 'flex';
+            document.getElementById('main-title').innerText = m === 'hybrid' ? "릴 하이브리드 3.0 가이드" : "릴 에이블 스마트 가이드";
+            show();
+        }
+
+        function home() {
+            document.getElementById('screen-sel').style.display = 'block';
+            document.getElementById('screen-guide').style.display = 'none';
+            document.getElementById('nav-bar').style.display = 'none';
+            document.getElementById('main-title').innerText = "릴(lil) 가이드북";
+        }
+
+        function show() {
+            const pData = data[mode].pages[page - 1];
+            document.getElementById('page-num').innerText = `PAGE ${page} / 3`;
+            document.getElementById('page-title').innerText = pData.t;
+            document.getElementById('view-img').src = data[mode].img;
+            
+            let listHtml = '';
+            pData.l.forEach(v => listHtml += `<li style='margin-bottom:10px;'>${v}</li>`);
+            document.getElementById('view-list').innerHTML = listHtml;
+
+            const sArea = document.getElementById('view-stick');
+            if (pData.s) {
+                sArea.style.display = 'grid';
+                let sHtml = '';
+                pData.s.forEach((item, idx) => { sHtml += `<div class="stick" onclick="popTaste(${idx})">${item.n}</div>`; });
+                sArea.innerHTML = sHtml;
+            } else { sArea.style.display = 'none'; }
+
+            document.getElementById('btn-prev').disabled = (page === 1);
+            document.getElementById('btn-next').disabled = (page === 3);
+        }
+
+        function move(dir) { page += dir; show(); }
+
+        function popTaste(idx) {
+            const item = data[mode].pages[2].s[idx];
+            document.getElementById('pop-title').innerText = item.n;
+            document.getElementById('pop-desc').innerText = item.d;
+            document.getElementById('pop').style.display = 'flex';
+        }
+
+        function closePop() { document.getElementById('pop').style.display = 'none'; }
+        function zoomImg() { document.getElementById('pop-img').src = data[mode].img; document.getElementById('img-pop').style.display = 'flex'; }
+    </script>
